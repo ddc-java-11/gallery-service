@@ -13,19 +13,25 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package edu.cnm.deepdive.gallery;
+package edu.cnm.deepdive.gallery.configuration;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.hateoas.config.EnableHypermediaSupport;
-import org.springframework.hateoas.config.EnableHypermediaSupport.HypermediaType;
+import java.security.SecureRandom;
+import java.util.Random;
+import org.springframework.boot.system.ApplicationHome;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-@SpringBootApplication
-@EnableHypermediaSupport(type = {HypermediaType.HAL})
-public class GalleryApplication {
+@Configuration
+public class Beans {
 
-  public static void main(String[] args) {
-    SpringApplication.run(GalleryApplication.class, args);
+  @Bean
+  public Random random() {
+    return new SecureRandom();
+  }
+
+  @Bean
+  public ApplicationHome applicationHome() {
+    return new ApplicationHome(this.getClass());
   }
 
 }

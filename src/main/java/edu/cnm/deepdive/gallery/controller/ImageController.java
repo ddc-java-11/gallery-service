@@ -1,12 +1,29 @@
+/*
+ *  Copyright 2020 CNM Ingenuity, Inc.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package edu.cnm.deepdive.gallery.controller;
 
-import edu.cnm.deepdive.gallery.exception.NotFoundException;
 import edu.cnm.deepdive.gallery.model.entity.Image;
 import edu.cnm.deepdive.gallery.model.entity.User;
 import edu.cnm.deepdive.gallery.service.ImageService;
 import edu.cnm.deepdive.gallery.service.UserService;
 import java.util.UUID;
+import org.springframework.core.io.Resource;
 import org.springframework.hateoas.server.ExposesResourceFor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -20,6 +37,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping(ImageController.RELATIVE_PATH)
@@ -28,8 +46,13 @@ public class ImageController {
 
   public static final String RELATIVE_PATH = "/images";
 
-  private static final String UUID_PARAMETER_PATTERN = "/{id:[0-9a-fA-F\\-]{32,36}}";
-  private static final String DESCRIPTION_PROPERTY_PATTERN = UUID_PARAMETER_PATTERN + "/description";
+  private static final String DESCRIPTION_PROPERTY_PATTERN =
+      ParameterPatterns.UUID_PATH_PARAMETER_PATTERN + "/description";
+  private static final String CONTENT_PROPERTY_PATTERN =
+      ParameterPatterns.UUID_PATH_PARAMETER_PATTERN + "/content";
+  private static final String ATTACHMENT_DISPOSITION_FORMAT = "attachment; filename=\"%s\"";
+  private static final String IMAGE_NOT_FOUND_REASON = "Image not found";
+  private static final String USER_NOT_FOUND_REASON = "User not found";
 
   private final UserService userService;
   private final ImageService imageService;
@@ -43,7 +66,13 @@ public class ImageController {
   public Iterable<Image> search(
       @RequestParam(value = "contributor", required = false) UUID contributorId,
       @RequestParam(value = "q", required = false) String fragment, Authentication auth) {
-    return imageService.search(userService.get(contributorId).orElse(null), fragment);
+    return (
+        (contributorId != null)
+            ? userService.get(contributorId)
+                .map((contributor) -> imageService.search(contributor, fragment))
+                .orElseThrow(this::imageNotFound)
+            : imageService.search(null, fragment)
+    ).toList();
   }
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -52,13 +81,13 @@ public class ImageController {
     return ResponseEntity.created(image.getHref()).body(image);
   }
 
-  @GetMapping(value = UUID_PARAMETER_PATTERN, produces = MediaType.APPLICATION_JSON_VALUE)
+  @GetMapping(value = ParameterPatterns.UUID_PATH_PARAMETER_PATTERN, produces = MediaType.APPLICATION_JSON_VALUE)
   public Image get(@PathVariable UUID id, Authentication auth) {
     return imageService.get(id)
-        .orElseThrow(NotFoundException::new);
+        .orElseThrow(this::imageNotFound);
   }
 
-  @DeleteMapping(value = UUID_PARAMETER_PATTERN)
+  @DeleteMapping(value = ParameterPatterns.UUID_PATH_PARAMETER_PATTERN)
   public void delete(@PathVariable UUID id, Authentication auth) {
     imageService.get(id, (User) auth.getPrincipal())
         .ifPresent(imageService::delete);
@@ -69,7 +98,7 @@ public class ImageController {
   public String getDescription(@PathVariable UUID id, Authentication auth) {
     return imageService.get(id)
         .map(Image::getDescription)
-        .orElseThrow(NotFoundException::new);
+        .orElseThrow(this::imageNotFound);
   }
 
   @PutMapping(value = DESCRIPTION_PROPERTY_PATTERN,
@@ -82,7 +111,31 @@ public class ImageController {
           image.setDescription(description);
           return imageService.save(image).getDescription();
         })
-        .orElseThrow(NotFoundException::new);
+        .orElseThrow(this::imageNotFound);
+  }
+
+  @GetMapping(value = CONTENT_PROPERTY_PATTERN)
+  public ResponseEntity<Resource> getContent(@PathVariable UUID id, Authentication auth) {
+    return imageService.get(id)
+        .flatMap(image -> imageService.getContent(image)
+            .map((resource) -> ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, dispositionHeader(image.getName()))
+                .header(HttpHeaders.CONTENT_TYPE, image.getContentType())
+                .body(resource))
+        )
+        .orElseThrow(this::imageNotFound);
+  }
+
+  private String dispositionHeader(String filename) {
+    return String.format(ATTACHMENT_DISPOSITION_FORMAT, filename);
+  }
+
+  private ResponseStatusException imageNotFound() {
+    return new ResponseStatusException(HttpStatus.NOT_FOUND, IMAGE_NOT_FOUND_REASON);
+  }
+
+  private ResponseStatusException userNotFound() {
+    return new ResponseStatusException(HttpStatus.NOT_FOUND, USER_NOT_FOUND_REASON);
   }
 
 }
