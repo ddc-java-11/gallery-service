@@ -64,19 +64,15 @@ public class LocalFilesystemStorageService implements StorageService {
     if (!contentTypes.contains(file.getContentType())) {
       throw new ForbiddenMimeTypeException();
     }
-    try {
-      String originalFilename = file.getOriginalFilename();
-      if (originalFilename == null) {
-        originalFilename = unknownFilename;
-      }
-      originalFilename = new File(originalFilename).getName();
-      String newFilename = String.format(filenameFormat, formatter.format(new Date()),
-          rng.nextInt(randomizerLimit), getExtension(originalFilename));
-      Files.copy(file.getInputStream(), uploadDirectory.resolve(newFilename));
-      return new FilenameTranslation(originalFilename, newFilename);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    String originalFilename = file.getOriginalFilename();
+    if (originalFilename == null) {
+      originalFilename = unknownFilename;
     }
+    originalFilename = new File(originalFilename).getName();
+    String newFilename = String.format(filenameFormat, formatter.format(new Date()),
+        rng.nextInt(randomizerLimit), getExtension(originalFilename));
+    Files.copy(file.getInputStream(), uploadDirectory.resolve(newFilename));
+    return new FilenameTranslation(originalFilename, newFilename);
   }
 
   @Override
