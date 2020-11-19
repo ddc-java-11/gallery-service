@@ -1,0 +1,42 @@
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 15MB
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://accounts.google.com
+          client-id: 840657645377-6edrs5sgs8t5un8cko814ob30mpm1s87.apps.googleusercontent.com
+  datasource:
+    url: jdbc:derby:gallery_db;create=true;collation=TERRITORY_BASED:PRIMARY
+  jpa:
+    hibernate:
+      ddl-auto: update
+#    properties:
+#      javax:
+#        persistence:
+#          schema-generation:
+#            create-source: metadata
+#            scripts:
+#              action: create
+#              create-target: ddl.sql
+
+server:
+  port: 18181
+  servlet:
+    context-path: /gallery
+
+upload:
+  use-application-home: true
+  path: uploads
+  filename:
+    unknown: (unknown)
+    format: "%1$s-%2$d.%3$s"
+    randomizer-limit: 1000000
+  timestamp:
+    format: yyyyMMddHHmmssSSS
+    time-zone: UTC
+
