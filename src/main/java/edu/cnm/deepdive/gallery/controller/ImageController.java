@@ -19,6 +19,8 @@ import edu.cnm.deepdive.gallery.model.entity.Image;
 import edu.cnm.deepdive.gallery.model.entity.User;
 import edu.cnm.deepdive.gallery.service.ImageService;
 import edu.cnm.deepdive.gallery.service.UserService;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.UUID;
 import org.springframework.core.io.Resource;
 import org.springframework.hateoas.server.ExposesResourceFor;
@@ -50,9 +52,13 @@ public class ImageController {
       ParameterPatterns.UUID_PATH_PARAMETER_PATTERN + "/description";
   private static final String CONTENT_PROPERTY_PATTERN =
       ParameterPatterns.UUID_PATH_PARAMETER_PATTERN + "/content";
+  private static final String CONTRIBUTOR_PARAM_NAME = "contributor";
+  private static final String FRAGMENT_PARAM_NAME = "q";
   private static final String ATTACHMENT_DISPOSITION_FORMAT = "attachment; filename=\"%s\"";
   private static final String IMAGE_NOT_FOUND_REASON = "Image not found";
   private static final String USER_NOT_FOUND_REASON = "User not found";
+  private static final String NOT_RETRIEVED_MESSAGE = "Unable to retrieve previously uploaded file";
+  private static final String NOT_STORED_MESSAGE = "Unable to store uploaded content";
 
   private final UserService userService;
   private final ImageService imageService;
@@ -64,21 +70,26 @@ public class ImageController {
 
   @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
   public Iterable<Image> search(
-      @RequestParam(value = "contributor", required = false) UUID contributorId,
-      @RequestParam(value = "q", required = false) String fragment, Authentication auth) {
+      @RequestParam(value = CONTRIBUTOR_PARAM_NAME, required = false) UUID contributorId,
+      @RequestParam(value = FRAGMENT_PARAM_NAME, required = false) String fragment, Authentication auth) {
     return (
         (contributorId != null)
             ? userService.get(contributorId)
                 .map((contributor) -> imageService.search(contributor, fragment))
-                .orElseThrow(this::imageNotFound)
+                .orElseThrow(this::userNotFound)
             : imageService.search(null, fragment)
     ).toList();
   }
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Image> post(@RequestParam MultipartFile file, Authentication auth) {
-    Image image = imageService.save(file, (User) auth.getPrincipal());
-    return ResponseEntity.created(image.getHref()).body(image);
+    try {
+      Image image = imageService.store(file, (User) auth.getPrincipal());
+      return ResponseEntity.created(image.getHref()).body(image);
+    } catch (IOException e) {
+      throw new ResponseStatusException(
+          HttpStatus.INTERNAL_SERVER_ERROR, NOT_STORED_MESSAGE, e);
+    }
   }
 
   @GetMapping(value = ParameterPatterns.UUID_PATH_PARAMETER_PATTERN, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -117,12 +128,17 @@ public class ImageController {
   @GetMapping(value = CONTENT_PROPERTY_PATTERN)
   public ResponseEntity<Resource> getContent(@PathVariable UUID id, Authentication auth) {
     return imageService.get(id)
-        .flatMap(image -> imageService.getContent(image)
-            .map((resource) -> ResponseEntity.ok()
+        .map((image) -> {
+          try {
+            return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, dispositionHeader(image.getName()))
                 .header(HttpHeaders.CONTENT_TYPE, image.getContentType())
-                .body(resource))
-        )
+                .body(imageService.retrieve(image));
+          } catch (MalformedURLException e) {
+            throw new ResponseStatusException(
+                HttpStatus.INTERNAL_SERVER_ERROR, NOT_RETRIEVED_MESSAGE, e);
+          }
+        })
         .orElseThrow(this::imageNotFound);
   }
 

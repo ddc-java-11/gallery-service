@@ -17,6 +17,8 @@ package edu.cnm.deepdive.gallery.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.net.URI;
 import java.util.Date;
@@ -48,6 +50,7 @@ import org.springframework.stereotype.Component;
         @Index(columnList = "created")
     }
 )
+@JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(
     value = {"id", "created", "contributor"},
     allowGetters = true, ignoreUnknown = true
