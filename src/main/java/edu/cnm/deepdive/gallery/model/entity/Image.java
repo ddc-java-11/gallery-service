@@ -152,10 +152,9 @@ public class Image {
     return (id == null) ? 0 : id.hashCode();
   }
 
-  @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
   @Override
   public boolean equals(Object obj) {
-    return Objects.equals(this.id, ((Image) obj).id);
+    return (this == obj || (obj instanceof Image && this.id.equals(((Image) obj).id)));
   }
 
   public URI getHref() {
