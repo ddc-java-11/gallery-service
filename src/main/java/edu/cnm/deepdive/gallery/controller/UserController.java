@@ -65,7 +65,7 @@ public class UserController {
 
   @GetMapping(value = CURRENT_USER, produces = MediaType.APPLICATION_JSON_VALUE)
   public User me(Authentication auth) {
-    return get(((User) auth.getPrincipal()).getId(), auth);
+    return (User) auth.getPrincipal();
   }
 
   @GetMapping(value = NAME_PROPERTY_PATTERN,
