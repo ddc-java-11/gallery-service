@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -60,29 +61,32 @@ public class LocalFilesystemStorageService implements StorageService {
   }
 
   @Override
-  public FilenameTranslation store(MultipartFile file) throws IOException, ForbiddenMimeTypeException {
+  public StorageReference store(MultipartFile file) throws IOException, ForbiddenMimeTypeException {
     if (!contentTypes.contains(file.getContentType())) {
       throw new ForbiddenMimeTypeException();
     }
-    try {
-      String originalFilename = file.getOriginalFilename();
-      if (originalFilename == null) {
-        originalFilename = unknownFilename;
-      }
-      originalFilename = new File(originalFilename).getName();
-      String newFilename = String.format(filenameFormat, formatter.format(new Date()),
-          rng.nextInt(randomizerLimit), getExtension(originalFilename));
-      Files.copy(file.getInputStream(), uploadDirectory.resolve(newFilename));
-      return new FilenameTranslation(originalFilename, newFilename);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    String originalFilename = file.getOriginalFilename();
+    if (originalFilename == null) {
+      originalFilename = unknownFilename;
     }
+    originalFilename = new File(originalFilename).getName();
+    String newFilename = String.format(filenameFormat, formatter.format(new Date()),
+        rng.nextInt(randomizerLimit), getExtension(originalFilename));
+    Files.copy(file.getInputStream(), uploadDirectory.resolve(newFilename));
+    return new StorageReference(originalFilename, newFilename);
   }
 
   @Override
-  public Resource retrieve(String filename) throws MalformedURLException {
-    Path file = uploadDirectory.resolve(filename);
+  public Resource retrieve(String reference) throws InvalidPathException, MalformedURLException {
+    Path file = uploadDirectory.resolve(reference);
     return new UrlResource(file.toUri());
+  }
+
+  @Override
+  public boolean delete(String reference)
+      throws InvalidPathException, UnsupportedOperationException, SecurityException {
+    File file = uploadDirectory.resolve(reference).toFile();
+    return file.delete();
   }
 
   @NonNull
