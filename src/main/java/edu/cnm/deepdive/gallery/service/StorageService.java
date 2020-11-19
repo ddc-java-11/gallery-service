@@ -2,31 +2,35 @@ package edu.cnm.deepdive.gallery.service;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.InvalidPathException;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface StorageService {
 
-  FilenameTranslation store(MultipartFile file) throws IOException, ForbiddenMimeTypeException;
+  StorageReference store(MultipartFile file) throws IOException, ForbiddenMimeTypeException;
 
-  Resource retrieve(String filename) throws MalformedURLException;
+  Resource retrieve(String reference) throws InvalidPathException, MalformedURLException;
 
-  class FilenameTranslation {
+  boolean delete(String reference)
+      throws InvalidPathException, UnsupportedOperationException, SecurityException;
 
-    private final String originalFilename;
-    private final String newFilename;
+  class StorageReference {
 
-    public FilenameTranslation(String originalFilename, String newFilename) {
-      this.originalFilename = originalFilename;
-      this.newFilename = newFilename;
+    private final String filename;
+    private final String reference;
+
+    public StorageReference(String filename, String reference) {
+      this.filename = filename;
+      this.reference = reference;
     }
 
-    public String getOriginalFilename() {
-      return originalFilename;
+    public String getFilename() {
+      return filename;
     }
 
-    public String getNewFilename() {
-      return newFilename;
+    public String getReference() {
+      return reference;
     }
 
   }
