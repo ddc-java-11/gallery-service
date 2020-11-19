@@ -50,7 +50,8 @@ public class ImageService {
   }
 
   public void delete(Image image) {
-    imageRepository.delete(image);
+    storageService.delete(image.getPath());
+    imageRepository.delete(image); // Delete unconditonally.
   }
 
   public Streamable<Image> search(User contributor, String fragment) {
