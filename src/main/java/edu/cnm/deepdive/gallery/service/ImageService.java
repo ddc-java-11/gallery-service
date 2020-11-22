@@ -85,11 +85,12 @@ public class ImageService {
     return imageRepository.save(image);
   }
 
-  public Image store(MultipartFile file, User contributor) throws IOException {
+  public Image store(MultipartFile file, String description, User contributor) throws IOException {
     StorageReference translation = storageService.store(file);
     Image image = new Image();
     image.setName(translation.getFilename());
     image.setPath(translation.getReference());
+    image.setDescription(description);
     image.setContributor(contributor);
     image.setContentType(file.getContentType());
     return imageRepository.save(image);

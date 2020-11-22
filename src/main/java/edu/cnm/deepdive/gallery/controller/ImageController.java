@@ -82,9 +82,10 @@ public class ImageController {
   }
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Image> post(@RequestParam MultipartFile file, Authentication auth) {
+  public ResponseEntity<Image> post(
+      @RequestParam MultipartFile file, @RequestParam String description, Authentication auth) {
     try {
-      Image image = imageService.store(file, (User) auth.getPrincipal());
+      Image image = imageService.store(file, description, (User) auth.getPrincipal());
       return ResponseEntity.created(image.getHref()).body(image);
     } catch (IOException e) {
       throw new ResponseStatusException(
