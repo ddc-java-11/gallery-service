@@ -21,8 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.net.URI;
+import java.util.Comparator;
 import java.util.Date;
-import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.PostConstruct;
 import javax.persistence.Column;
@@ -38,26 +38,36 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.server.EntityLinks;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
+/**
+ * Encapsulates a persistent image object with: title, description, file metadata (original filename
+ * and MIME type), reference to the contributing user, and reference to the actual content.
+ */
 @SuppressWarnings("JpaDataSourceORMInspection")
 @Entity
 @Table(
     indexes = {
-        @Index(columnList = "created")
+        @Index(columnList = "created, updated"),
+        @Index(columnList = "title")
     }
 )
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(
-    value = {"id", "created", "contributor"},
+    value = {"id", "created", "updated", "href", "contributor"},
     allowGetters = true, ignoreUnknown = true
 )
-@JsonPropertyOrder({"id", "href", "created", "contributor", "name", "description"})
+@JsonPropertyOrder(
+    {"id", "title", "description", "name", "href", "created", "updated", "contributor"})
 @Component
-public class Image {
+public class Image implements Comparable<Image> {
+
+  private static final Comparator<Image> NATURAL_COMPARATOR =
+      Comparator.comparing((img) -> (img.title != null) ? img.title : img.name);
 
   private static EntityLinks entityLinks;
 
@@ -76,87 +86,200 @@ public class Image {
   private Date created;
 
   @NonNull
+  @UpdateTimestamp
+  @Temporal(TemporalType.TIMESTAMP)
+  @Column(nullable = false, updatable = false)
+  private Date updated;
+
+  @Column(length = 100)
+  private String title;
+
+  @Column(length = 1024)
+  private String description;
+
+  @NonNull
+  @Column(nullable = false, updatable = false)
+  private String name;
+
+  @NonNull
   @Column(nullable = false, updatable = false)
   @JsonIgnore
   private String path;
 
   @NonNull
   @Column(nullable = false, updatable = false)
-  private String name;
-
   private String contentType;
-
-  private String description;
 
   @NonNull
   @ManyToOne(fetch = FetchType.EAGER, optional = false)
   @JoinColumn(name = "contributor_id", nullable = false, updatable = false)
   private User contributor;
 
+  /**
+   * Returns the unique identifier of this image.
+   */
   @NonNull
   public UUID getId() {
     return id;
   }
 
+  /**
+   * Returns the datetime this image was first persisted to the database.
+   */
   @NonNull
   public Date getCreated() {
     return created;
   }
 
+  /**
+   * Returns the datetime this image was most recently updated in the database.
+   */
   @NonNull
-  public String getPath() {
-    return path;
+  public Date getUpdated() {
+    return updated;
   }
 
-  public void setPath(@NonNull String path) {
-    this.path = path;
+  /**
+   * Returns the title of this image.
+   */
+  public String getTitle() {
+    return title;
   }
 
+  /**
+   * Sets the title of this image to the specified {@code title}.
+   */
+  public void setTitle(String title) {
+    this.title = title;
+  }
+
+  /**
+   * Returns the description of this image.
+   */
+  public String getDescription() {
+    return description;
+  }
+
+  /**
+   * Sets the description of this image to the specified {@code description}.
+   */
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  /**
+   * Returns the original filename of this image.
+   */
   @NonNull
   public String getName() {
     return name;
   }
 
+  /**
+   * Sets the original filename of this image to the specified {@code name}.
+   */
   public void setName(@NonNull String name) {
     this.name = name;
   }
 
+  /**
+   * Returns a reference (a {@link String} representation of a {@link java.nio.file.Path}, {@link
+   * URI}, etc.) to the location of this image. This should be treated as an &ldquo;opaque&rdquo;
+   * value, meaningful only to the storage service.
+   */
+  @NonNull
+  public String getPath() {
+    return path;
+  }
+
+  /**
+   * Sets the location reference of this image to the specified {@code path}. This should be treated
+   * as an &ldquo;opaque&rdquo; value, meaningful only to the storage service.
+   */
+  public void setPath(@NonNull String path) {
+    this.path = path;
+  }
+
+  /**
+   * Returns the MIME type of this image.
+   */
+  @NonNull
   public String getContentType() {
     return contentType;
   }
 
-  public void setContentType(String contentType) {
+  /**
+   * Sets the MIME type of this image to the specified {@code contentType}.
+   */
+  public void setContentType(@NonNull String contentType) {
     this.contentType = contentType;
   }
 
-  public String getDescription() {
-    return description;
-  }
-
-  public void setDescription(String description) {
-    this.description = description;
-  }
-
+  /**
+   * Returns the {@link User} that contributed this image.
+   */
   @NonNull
   public User getContributor() {
     return contributor;
   }
 
+  /**
+   * Sets this image's contributor to the specified {@link User}.
+   */
   public void setContributor(@NonNull User contributor) {
     this.contributor = contributor;
   }
 
+  /**
+   * Returns the {@link String#hashCode()} of the original filename. Since this filename will not
+   * change on or after persistence, this guarantees that the hash for an {@code Image} instance
+   * does not change.
+   */
   @Override
   public int hashCode() {
     //noinspection ConstantConditions
-    return (id == null) ? 0 : id.hashCode();
+    return (name != null) ? name.hashCode() : 0;
   }
 
+  /**
+   * Compares this image with {@code obj}, to test for equality. In general, distinct instances that
+   * are not yet persisted will not be considered equal, regardless of content; persisted instances
+   * will only be considered equal if the primary key values are equal.
+   *
+   * @param obj object to be tested for equality with this image.
+   * @return {@code true} if {@code this} and {@code obj} may be considered equal; false
+   * otherwise.
+   */
   @Override
   public boolean equals(Object obj) {
-    return (this == obj || (obj instanceof Image && this.id.equals(((Image) obj).id)));
+    boolean equal;
+    if (this == obj) {
+      equal = true;
+    } else if (obj instanceof Image) {
+      Image other = (Image) obj;
+      //noinspection ConstantConditions
+      equal = id != null || other.id != null && id.equals(other.id);
+    } else {
+      equal = false;
+    }
+    return equal;
   }
 
+  /**
+   * Compares this image to {@code other} by {@code title}, then {@code name} if {@code title} is
+   * {@code null}, for the purpose of &ldquo;natural&rdquo; ordering.
+   *
+   * @param other Instance compared to {@code this}.
+   * @return Negative if {@code this < other}, positive if {@code this > other}, zero otherwise.
+   */
+  @Override
+  public int compareTo(Image other) {
+    return NATURAL_COMPARATOR.compare(this, other);
+  }
+
+  /**
+   * Returns the location of REST resource representation of this image.
+   */
   public URI getHref() {
     //noinspection ConstantConditions
     return (id != null) ? entityLinks.linkForItemResource(Image.class, id).toUri() : null;
@@ -168,6 +291,10 @@ public class Image {
     entityLinks.toString();
   }
 
+  /**
+   * Injects the {@link EntityLinks} required for constructing the REST resource location of an
+   * image.
+   */
   @Autowired
   public void setEntityLinks(
       @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection") EntityLinks entityLinks) {

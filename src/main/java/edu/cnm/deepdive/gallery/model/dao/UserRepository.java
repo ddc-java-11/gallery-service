@@ -15,18 +15,37 @@
  */
 package edu.cnm.deepdive.gallery.model.dao;
 
+import edu.cnm.deepdive.gallery.model.entity.Image;
 import edu.cnm.deepdive.gallery.model.entity.User;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.util.Streamable;
 
+/**
+ * Declares custom queries (beyond those declared in {@link JpaRepository}) on {@link User} entity
+ * instances.
+ */
 public interface UserRepository extends JpaRepository<User, UUID> {
 
+  /**
+   * Returns an {@link Optional Optional&lt;User&gt;} containing a {@link User} with the specified
+   * {@code oauthKey}, if one exists; if not, an empty {@link Optional} is returned.
+   *
+   * @param oauthKey OpenID unique identifier.
+   * @return {@link Optional} containing the selected user, if any; if not, an empty {@link
+   * Optional} is returned.
+   */
   Optional<User> findFirstByOauthKey(String oauthKey);
 
-  Streamable<User> getAllByOrderByCreated();
+  /**
+   * Returns all {@link User} instances, in ascending order of datetime created (i.e. datetime of
+   * first connection to the service).
+   */
+  Iterable<User> getAllByOrderByCreatedAsc();
 
-  Streamable<User> getAllByOrderByDisplayName();
+  /**
+   * Returns all {@link User} instances, in ascending order of display name.
+   */
+  Iterable<User> getAllByOrderByDisplayNameAsc();
 
 }
