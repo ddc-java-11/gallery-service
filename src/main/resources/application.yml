@@ -13,6 +13,7 @@ spring:
   datasource:
     url: jdbc:derby:gallery_db;create=true;collation=TERRITORY_BASED:PRIMARY
   jpa:
+    database-platform: org.hibernate.dialect.DerbyDialect
     hibernate:
       ddl-auto: update
 #    properties:
@@ -30,33 +31,19 @@ server:
     context-path: /gallery
 
 upload:
-  # Flag specifying whether the location of the JAR (or class files, if not in a JAR) will also be
-  # the location of the uploads directory.
   applicationHome: true
-  # The upload directory path/name, relative to the application home (or, if applicationHome is
-  # false, then the working directory).
-  path: uploads
-  # Allowed MIME types of uploaded files.
-  contentTypes:
+  directory: uploads
+  subdirectoryPattern: "^(.{4})(.{2})(.{2}).*$"
+  whitelist:
     - image/bmp
     - image/gif
     - image/jpeg
     - image/pjpeg
     - image/png
     - image/tiff
-  # Properties of the filenames generated for uploaded files.
   filename:
-    # Name used if the uploaded file does not include filename metadata (unlikely).
-    unknown: (unknown)
-    # Format of generated file names, including timestamp (placeholder 1), random number
-    # (placeholder 2), and extension (placeholder 3).
     format: "%1$s-%2$d.%3$s"
-    # Upper bound (exclusive) for random number portion of filename.
     randomizerLimit: 1000000
-    # Properties for the timestamp portion of the filename.
     timestamp:
-      # Timestamp format.
       format: yyyyMMddHHmmssSSS
-      # Timezone to use in computing timestamp (not necessarily displayed).
       timeZone: UTC
-

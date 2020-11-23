@@ -50,10 +50,17 @@
     </dependency>
 
     <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-configuration-processor</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.derby</groupId>
       <artifactId>derby</artifactId>
       <scope>runtime</scope>
     </dependency>
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
@@ -71,6 +78,35 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>
+              <groupId>org.springframework.boot</groupId>
+              <artifactId>spring-boot-configuration-processor</artifactId>
+            </exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.2.0</version>
+        <configuration>
+          <links>
+            <link>https://docs.oracle.com/en/java/javase/11/docs/api/</link>
+            <link>https://docs.spring.io/spring-framework/docs/current/javadoc-api/</link>
+            <link>https://docs.spring.io/spring-boot/docs/current/api/</link>
+            <link>https://docs.spring.io/spring-hateoas/docs/current/api/</link>
+            <link>https://docs.spring.io/spring-data/commons/docs/current/api/</link>
+            <link>https://docs.spring.io/spring-data/data-jpa/docs/current/api/</link>
+            <link>https://docs.spring.io/spring-security/site/docs/current/api/</link>
+            <link>https://docs.jboss.org/hibernate/orm/current/javadocs/</link>
+            <link>https://fasterxml.github.io/jackson-core/javadoc/2.11/</link>
+            <link>https://fasterxml.github.io/jackson-databind/javadoc/2.11/</link>
+            <link>https://javadoc.io/doc/com.fasterxml.jackson.datatype/jackson-datatype-jdk8/2.11.3/</link>
+            <link>https://javadoc.io/doc/com.fasterxml.jackson.datatype/jackson-datatype-jsr310/2.11.3/</link>
+          </links>
+        </configuration>
       </plugin>
     </plugins>
   </build>
