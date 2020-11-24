@@ -50,7 +50,7 @@ import org.springframework.web.server.ResponseStatusException;
 @ExposesResourceFor(Image.class)
 public class ImageController {
 
-  public static final String RELATIVE_PATH = "/images";
+  static final String RELATIVE_PATH = "/images";
 
   private static final String TITLE_PROPERTY_PATTERN =
       BaseParameterPatterns.UUID_PATH_PARAMETER_PATTERN + "/title";
