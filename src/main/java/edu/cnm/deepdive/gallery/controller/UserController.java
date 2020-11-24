@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 @ExposesResourceFor(User.class)
 public class UserController {
 
-  public static final String RELATIVE_PATH = "/users";
+  static final String RELATIVE_PATH = "/users";
 
   private static final String NAME_PROPERTY_PATTERN =
       BaseParameterPatterns.UUID_PATH_PARAMETER_PATTERN + "/name";
