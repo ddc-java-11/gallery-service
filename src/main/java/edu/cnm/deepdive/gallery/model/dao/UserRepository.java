@@ -15,7 +15,6 @@
  */
 package edu.cnm.deepdive.gallery.model.dao;
 
-import edu.cnm.deepdive.gallery.model.entity.Image;
 import edu.cnm.deepdive.gallery.model.entity.User;
 import java.util.Optional;
 import java.util.UUID;

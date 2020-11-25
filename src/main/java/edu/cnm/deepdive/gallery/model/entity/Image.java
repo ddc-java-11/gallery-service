@@ -58,7 +58,7 @@ import org.springframework.stereotype.Component;
 )
 @JsonInclude(Include.NON_NULL)
 @JsonIgnoreProperties(
-    value = {"id", "created", "updated", "href", "contributor"},
+    value = {"id", "created", "updated", "contentType", "href", "contributor"},
     allowGetters = true, ignoreUnknown = true
 )
 @JsonPropertyOrder(

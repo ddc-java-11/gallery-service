@@ -45,6 +45,11 @@ public interface ImageRepository extends JpaRepository<Image, UUID> {
   Iterable<Image> getAllByOrderByTitleAscCreatedDesc();
 
   /**
+   * Returns all images in created datetime (descending) order.
+   */
+  Iterable<Image> getAllByOrderByCreatedDesc();
+
+  /**
    * Selects and returns all images uploaded by {@code contributor} in descending order of datetime
    * created (uploaded).
    *

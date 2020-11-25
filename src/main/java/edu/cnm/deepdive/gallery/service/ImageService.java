@@ -23,13 +23,11 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Implements high-level operations on {@link Image} instances, including file store operations and
@@ -131,7 +129,7 @@ public class ImageService {
    * Selects and returns all images.
    */
   public Iterable<Image> list() {
-    return imageRepository.getAllByOrderByTitleAscCreatedDesc();
+    return imageRepository.getAllByOrderByCreatedDesc();
   }
 
   /**
@@ -189,23 +187,6 @@ public class ImageService {
    */
   public Resource retrieve(@NonNull Image image) throws IOException {
     return storageService.retrieve(image.getPath());
-  }
-
-  /**
-   * Convenience class extending {@link ResponseStatusException}, for the purpose of including a
-   * default HTTP response status &amp; message when the no-parameter constructor is used.
-   */
-  public static class ImageNotFoundException extends ResponseStatusException {
-
-    private static final String IMAGE_NOT_FOUND_REASON = "Image not found";
-
-    /**
-     * Initializes this instance with a relevant message &amp; response status.
-     */
-    public ImageNotFoundException() {
-      super(HttpStatus.NOT_FOUND, IMAGE_NOT_FOUND_REASON);
-    }
-
   }
 
 }

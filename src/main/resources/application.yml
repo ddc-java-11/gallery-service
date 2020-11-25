@@ -13,7 +13,7 @@ spring:
   datasource:
     url: jdbc:derby:gallery_db;create=true;collation=TERRITORY_BASED:PRIMARY
   jpa:
-    database-platform: org.hibernate.dialect.DerbyDialect
+    database-platform: org.hibernate.dialect.DerbyTenSevenDialect
     hibernate:
       ddl-auto: update
 #    properties:

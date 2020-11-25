@@ -1,5 +1,5 @@
 /**
- * REST controllers (and utility classes) handling HTTP requests, and constructing &amp; returning
- * responses.
+ * REST controllers&mdash;as well as exceptions and utility classes&mdash;used in handling HTTP
+ * requests and constructing responses.
  */
 package edu.cnm.deepdive.gallery.controller;
