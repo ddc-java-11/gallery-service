@@ -31,9 +31,9 @@ server:
     context-path: /gallery
 
 upload:
-  applicationHome: true
+  application-home: true
   directory: uploads
-  subdirectoryPattern: "^(.{4})(.{2})(.{2}).*$"
+  subdirectory-pattern: "^(.{4})(.{2})(.{2}).*$"
   whitelist:
     - image/bmp
     - image/gif
@@ -43,7 +43,7 @@ upload:
     - image/tiff
   filename:
     format: "%1$s-%2$d.%3$s"
-    randomizerLimit: 1000000
+    randomizer-limit: 1000000
     timestamp:
       format: yyyyMMddHHmmssSSS
-      timeZone: UTC
+      time-zone: UTC
